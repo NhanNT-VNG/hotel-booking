@@ -9,7 +9,7 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
 
-    <title>My Nice Page</title>
+    <title>Hotel Booking</title>
 
     <link
       rel="stylesheet"
@@ -116,7 +116,7 @@
         <div class="col">right</div>
       </div>
     </footer>
-
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script
       src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
       integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
@@ -224,22 +224,21 @@
         async function custom(c) {
           const { msg = "", title = "" } = c;
 
-          const { value: formValues } = await Swal.fire({
+          const { value: result } = await Swal.fire({
             title: title,
             html: msg,
             backdrop: false,
             focusConfirm: false,
             showCancelButton: true,
             willOpen: () => {
-              const elem = document.getElementById("reservation-dates-modal");
-              const rp = new DateRangePicker(elem, {
-                format: "yyyy-mm-dd",
-                showOnFocus: true,
-              });
+              if (c.willOpen) {
+                c.willOpen();
+              }
             },
             didOpen: () => {
-              document.getElementById("start").removeAttribute("disabled");
-              document.getElementById("end").removeAttribute("disabled");
+              if (c.didOpen) {
+                c.didOpen();
+              }
             },
             preConfirm: () => {
               return [
@@ -249,8 +248,18 @@
             },
           });
 
-          if (formValues) {
-            Swal.fire(JSON.stringify(formValues));
+          if (result) {
+            if (result.dismiss !== Swal.DismissReason.cancel) {
+              if (c.callback) {
+                if (result) {
+                  c.callback(result);
+                } else {
+                  c.callback(false);
+                }
+              }
+            } else {
+              c.callback(false);
+            }
           }
         }
 
