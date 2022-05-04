@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/NhanNT-VNG/hotel-booking/pkg/config"
-	"github.com/NhanNT-VNG/hotel-booking/pkg/handlers"
+	"github.com/NhanNT-VNG/hotel-booking/internal/config"
+	"github.com/NhanNT-VNG/hotel-booking/internal/handlers"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

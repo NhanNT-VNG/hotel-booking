@@ -6,9 +6,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/NhanNT-VNG/hotel-booking/pkg/config"
-	"github.com/NhanNT-VNG/hotel-booking/pkg/models"
-	"github.com/NhanNT-VNG/hotel-booking/pkg/render"
+	"github.com/NhanNT-VNG/hotel-booking/internal/config"
+	"github.com/NhanNT-VNG/hotel-booking/internal/models"
+	"github.com/NhanNT-VNG/hotel-booking/internal/render"
 )
 
 type Repository struct {

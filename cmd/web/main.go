@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NhanNT-VNG/hotel-booking/pkg/config"
-	"github.com/NhanNT-VNG/hotel-booking/pkg/handlers"
-	"github.com/NhanNT-VNG/hotel-booking/pkg/render"
+	"github.com/NhanNT-VNG/hotel-booking/internal/config"
+	"github.com/NhanNT-VNG/hotel-booking/internal/handlers"
+	"github.com/NhanNT-VNG/hotel-booking/internal/render"
 
 	"github.com/alexedwards/scs/v2"
 )
