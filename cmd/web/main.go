@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/gob"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
 	"github.com/NhanNT-VNG/hotel-booking/internal/handlers"
+	"github.com/NhanNT-VNG/hotel-booking/internal/models"
 	"github.com/NhanNT-VNG/hotel-booking/internal/render"
 
 	"github.com/alexedwards/scs/v2"
@@ -18,6 +20,7 @@ var app config.AppConfig
 var session *scs.SessionManager
 
 func main() {
+	gob.Register(models.Reservation{})
 	app.InProduction = false
 
 	session = scs.New()

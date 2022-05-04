@@ -1,5 +1,7 @@
 package models
 
+import "github.com/NhanNT-VNG/hotel-booking/internal/forms"
+
 type TemplateData struct {
 	StringMap map[string]string
 	IntMap    map[string]int
@@ -9,4 +11,5 @@ type TemplateData struct {
 	Flash     string
 	Waring    string
 	Error     string
+	Form      *forms.Form
 }
