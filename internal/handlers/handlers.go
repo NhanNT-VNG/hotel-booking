@@ -3,11 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
 	"github.com/NhanNT-VNG/hotel-booking/internal/forms"
+	"github.com/NhanNT-VNG/hotel-booking/internal/helpers"
 	"github.com/NhanNT-VNG/hotel-booking/internal/models"
 	"github.com/NhanNT-VNG/hotel-booking/internal/render"
 )
@@ -29,22 +29,12 @@ func NewHandlers(r *Repository) {
 }
 
 func (repo *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	remoteIP := r.RemoteAddr
-
-	repo.App.Session.Put(r.Context(), "remote_ip", remoteIP)
 	render.RenderTemplate(w, r, "home.page.html", &models.TemplateData{})
 }
 
 func (repo *Repository) About(w http.ResponseWriter, r *http.Request) {
-	stringMap := make(map[string]string)
-	stringMap["test"] = "Hello Nhan Nguyen"
 
-	remoteIP := repo.App.Session.GetString(r.Context(), "remote_ip")
-	stringMap["remote_ip"] = remoteIP
-
-	render.RenderTemplate(w, r, "about.page.html", &models.TemplateData{
-		StringMap: stringMap,
-	})
+	render.RenderTemplate(w, r, "about.page.html", &models.TemplateData{})
 }
 
 func (repo *Repository) Contact(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +62,7 @@ func (repo *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 func (repo *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
 		return
 	}
 
@@ -107,6 +97,7 @@ func (repo *Repository) PostReservation(w http.ResponseWriter, r *http.Request) 
 func (repo *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := repo.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
+		repo.App.ErrorLog.Panicln("Can't get error from session")
 		repo.App.Session.Put(r.Context(), "error", "Cant't get reservation from session")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
@@ -141,7 +132,8 @@ func (repo *Repository) AvailabilityJson(w http.ResponseWriter, r *http.Request)
 
 	out, err := json.MarshalIndent(res, "", "  ")
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)

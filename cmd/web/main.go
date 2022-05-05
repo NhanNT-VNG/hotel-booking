@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
 	"github.com/NhanNT-VNG/hotel-booking/internal/handlers"
+	"github.com/NhanNT-VNG/hotel-booking/internal/helpers"
 	"github.com/NhanNT-VNG/hotel-booking/internal/models"
 	"github.com/NhanNT-VNG/hotel-booking/internal/render"
 
@@ -19,6 +21,8 @@ const portNumber = ":3000"
 
 var app config.AppConfig
 var session *scs.SessionManager
+var infoLog *log.Logger
+var errorLog *log.Logger
 
 func main() {
 
@@ -42,6 +46,11 @@ func run() error {
 	gob.Register(models.Reservation{})
 	app.InProduction = false
 
+	infoLog = log.New(os.Stdout, "INFO", log.Ldate|log.Ltime)
+	errorLog = log.New(os.Stdout, "ERROR", log.Ldate|log.Ltime|log.Lshortfile)
+	app.InfoLog = infoLog
+	app.ErrorLog = errorLog
+
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
@@ -63,7 +72,8 @@ func run() error {
 	repo := handlers.NewRepo(&app)
 
 	handlers.NewHandlers(repo)
-
 	render.NewTemplates(&app)
+	helpers.NewHelpers(&app)
+
 	return nil
 }
