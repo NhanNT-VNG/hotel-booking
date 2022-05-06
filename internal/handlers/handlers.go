@@ -6,21 +6,26 @@ import (
 	"net/http"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
+	"github.com/NhanNT-VNG/hotel-booking/internal/driver"
 	"github.com/NhanNT-VNG/hotel-booking/internal/forms"
 	"github.com/NhanNT-VNG/hotel-booking/internal/helpers"
 	"github.com/NhanNT-VNG/hotel-booking/internal/models"
 	"github.com/NhanNT-VNG/hotel-booking/internal/render"
+	"github.com/NhanNT-VNG/hotel-booking/internal/repository"
+	dbrepo "github.com/NhanNT-VNG/hotel-booking/internal/repository/dbRepo"
 )
-
-type Repository struct {
-	App *config.AppConfig
-}
 
 var Repo *Repository
 
-func NewRepo(_app *config.AppConfig) *Repository {
+type Repository struct {
+	App *config.AppConfig
+	DB  repository.DatabaseRepo
+}
+
+func NewRepo(_app *config.AppConfig, db *driver.DB) *Repository {
 	return &Repository{
 		App: _app,
+		DB:  dbrepo.NewPostgresRepo(db.SQL, _app),
 	}
 }
 

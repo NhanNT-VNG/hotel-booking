@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
+	"github.com/NhanNT-VNG/hotel-booking/internal/driver"
 	"github.com/NhanNT-VNG/hotel-booking/internal/handlers"
 	"github.com/NhanNT-VNG/hotel-booking/internal/helpers"
 	"github.com/NhanNT-VNG/hotel-booking/internal/models"
@@ -26,11 +27,13 @@ var errorLog *log.Logger
 
 func main() {
 
-	err := run()
+	db, err := run()
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer db.SQL.Close()
 	fmt.Println("App listen on port", portNumber)
 
 	src := &http.Server{
@@ -42,8 +45,12 @@ func main() {
 	log.Fatal(err)
 }
 
-func run() error {
+func run() (*driver.DB, error) {
 	gob.Register(models.Reservation{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
+	gob.Register(models.User{})
+
 	app.InProduction = false
 
 	infoLog = log.New(os.Stdout, "INFO", log.Ldate|log.Ltime)
@@ -59,21 +66,30 @@ func run() error {
 
 	app.Session = session
 
+	log.Println("Connecting to database...")
+	db, err := driver.ConnectSQL("dbname=hotel_booking")
+
+	if err != nil {
+		log.Fatal("Cannot connect to database! Dying...")
+	}
+
+	log.Println("Connected to database")
+
 	tc, err := render.CreateTemplateCache()
 
 	if err != nil {
 		log.Fatal("Cannot create tempalate cache")
-		return err
+		return nil, err
 	}
 
 	app.TemplateCache = tc
 	app.UseCache = false
 
-	repo := handlers.NewRepo(&app)
+	repo := handlers.NewRepo(&app, db)
 
 	handlers.NewHandlers(repo)
 	render.NewTemplates(&app)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }
