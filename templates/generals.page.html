@@ -49,10 +49,10 @@
                 <div class="col">
                     <div class="form-row" id="reservation-dates-modal">
                         <div class="col">
-                            <input disabled required class="form-control" type="text" name="start" id="start" placeholder="Arrival">
+                            <input disabled required class="form-control" type="text" name="start" id="start" placeholder="Arrival" autocomplete="off">
                         </div>
                         <div class="col">
-                            <input disabled required class="form-control" type="text" name="end" id="end" placeholder="Departure">
+                            <input disabled required class="form-control" type="text" name="end" id="end" placeholder="Departure" autocomplete="off">
                         </div>
 
                     </div>
@@ -68,6 +68,7 @@
           const rp = new DateRangePicker(elem, {
             format: "yyyy-mm-dd",
             showOnFocus: true,
+            minDate: new Date()
           });
         },
         didOpen: () => {
@@ -78,8 +79,14 @@
           const form = document.getElementById("check-availability-form");
           const body = new FormData(form);
           body.append("csrf_token", "{{.CSRFToken}}");
-          const { data: data } = await axios.post("/search-availability", body);
-          console.log({ data });
+          body.append("room_id", "1");
+          const { data: data } = await axios.post("/search-availability-json", body);
+          if (data.ok){
+          }else {
+            attention.error({
+              msg: "Room is not available, please choose another date"
+            })
+          }
         },
       });
     });
