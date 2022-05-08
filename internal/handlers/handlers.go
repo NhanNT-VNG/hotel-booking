@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
 	"github.com/NhanNT-VNG/hotel-booking/internal/driver"
@@ -71,11 +73,35 @@ func (repo *Repository) PostReservation(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	sd := r.Form.Get("start_date")
+	ed := r.Form.Get("end_date")
+
+	layout := "2006-01-02"
+
+	startDate, err := time.Parse(layout, sd)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+	endDate, err := time.Parse(layout, ed)
+
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	roomId, err := strconv.Atoi(r.Form.Get("room_id"))
+
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
 	reservation := models.Reservation{
 		FirstName: r.Form.Get("first_name"),
 		LastName:  r.Form.Get("last_name"),
 		Email:     r.Form.Get("email"),
 		Phone:     r.Form.Get("phone"),
+		StartDate: startDate,
+		EndDate:   endDate,
+		RoomId:    roomId,
 	}
 
 	form := forms.New(r.PostForm)
@@ -93,6 +119,23 @@ func (repo *Repository) PostReservation(w http.ResponseWriter, r *http.Request) 
 			Data: data,
 		})
 		return
+	}
+	reservationId, err := repo.DB.InsertReservation(reservation)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	roomRestriction := models.RoomRestriction{
+		StartDate:     startDate,
+		EndDate:       endDate,
+		RoomId:        roomId,
+		ReservationId: reservationId,
+		RestrictionId: 1,
+	}
+
+	err = repo.DB.InsertRoomRestrictions(roomRestriction)
+	if err != nil {
+		helpers.ServerError(w, err)
 	}
 
 	repo.App.Session.Put(r.Context(), "reservation", reservation)
