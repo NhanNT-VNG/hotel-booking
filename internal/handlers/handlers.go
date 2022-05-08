@@ -81,17 +81,20 @@ func (repo *Repository) PostReservation(w http.ResponseWriter, r *http.Request) 
 	startDate, err := time.Parse(layout, sd)
 	if err != nil {
 		helpers.ServerError(w, err)
+		return
 	}
 	endDate, err := time.Parse(layout, ed)
 
 	if err != nil {
 		helpers.ServerError(w, err)
+		return
 	}
 
 	roomId, err := strconv.Atoi(r.Form.Get("room_id"))
 
 	if err != nil {
 		helpers.ServerError(w, err)
+		return
 	}
 
 	reservation := models.Reservation{
@@ -164,6 +167,36 @@ func (repo *Repository) Availability(w http.ResponseWriter, r *http.Request) {
 func (repo *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
+
+	layout := "2006-01-02"
+	startDate, err := time.Parse(layout, start)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	endDate, err := time.Parse(layout, end)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	rooms, err := repo.DB.SearchAvailabilityAllRooms(startDate, endDate)
+
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	for _, room := range rooms {
+		repo.App.InfoLog.Println("Room: ", room.ID, room.RoomName)
+	}
+
+	if len(rooms) == 0 {
+		repo.App.Session.Put(r.Context(), "error", "No rom availability")
+		http.Redirect(w, r, "search-availability", http.StatusSeeOther)
+		return
+	}
+
 	w.Write([]byte(fmt.Sprintf("Start date is %v and end date is %v", start, end)))
 }
 
