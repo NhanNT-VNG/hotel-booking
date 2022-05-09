@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -332,5 +333,43 @@ func (repo *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (repo *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "login.page.html", &models.TemplateData{})
+	render.RenderTemplate(w, r, "login.page.html", &models.TemplateData{
+		Form: forms.New(nil),
+	})
+}
+
+func (repo *Repository) Login(w http.ResponseWriter, r *http.Request) {
+	_ = repo.App.Session.RenewToken(r.Context())
+	err := r.ParseForm()
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+
+	form := forms.New(r.PostForm)
+	form.Required("email", "password")
+	form.IsEmail("email")
+	if !form.Valid() {
+		render.RenderTemplate(w, r, "login.page.html", &models.TemplateData{
+			Form: form,
+		})
+		return
+	}
+
+	id, _, err := repo.DB.Authenticate(email, password)
+	if err != nil {
+		log.Println(err)
+		repo.App.Session.Put(r.Context(), "error", "Invalid login credentials")
+		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		return
+	}
+
+	repo.App.Session.Put(r.Context(), "user_id", id)
+
+	repo.App.Session.Put(r.Context(), "flash", "Login successfully!")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+
 }

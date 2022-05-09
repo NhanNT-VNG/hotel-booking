@@ -30,7 +30,8 @@ func routes(app *config.AppConfig) http.Handler {
 
 	mux.Get("/contact", handlers.Repo.Contact)
 
-	// mux.Get("/user/login", handlers.Repo.ShowLogin)
+	mux.Get("/user/login", handlers.Repo.ShowLogin)
+	mux.Post("/user/login", handlers.Repo.Login)
 
 	mux.Get("/make-reservation", handlers.Repo.Reservation)
 	mux.Get("/reservation-summary", handlers.Repo.ReservationSummary)
