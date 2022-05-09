@@ -68,7 +68,7 @@
           const rp = new DateRangePicker(elem, {
             format: "yyyy-mm-dd",
             showOnFocus: true,
-            minDate: new Date()
+            minDate: new Date(),
           });
         },
         didOpen: () => {
@@ -80,12 +80,22 @@
           const body = new FormData(form);
           body.append("csrf_token", "{{.CSRFToken}}");
           body.append("room_id", "1");
-          const { data: data } = await axios.post("/search-availability-json", body);
-          if (data.ok){
-          }else {
+          const {
+            data: { ok, room_id, start_date, end_date },
+          } = await axios.post("/search-availability-json", body);
+          const link = `/book-room?id=${room_id}&s=${start_date}&e=${end_date}`
+          if (ok) {
+            attention.custom({
+              icon: "success",
+              msg: `<p>Room is available!</p>
+                    <p><a href="${link}" class="btn btn-primary">Book now!</a></p>  
+                  `,
+              showConfirmButton: false,
+            });
+          } else {
             attention.error({
-              msg: "Room is not available, please choose another date"
-            })
+              msg: "Room is not available, please choose another date",
+            });
           }
         },
       });

@@ -1,77 +1,102 @@
-{{template "base" .}}
-
-{{define "content"}}
-    <div class="container">
-
-
-        <div class="row">
-            <div class="col">
-                <img src="/static/images/marjors-suite.png"
-                     class="img-fluid img-thumbnail mx-auto d-block room-image" alt="room image">
-            </div>
-        </div>
-
-
-        <div class="row">
-            <div class="col">
-                <h1 class="text-center mt-4">Major's Suite</h1>
-                <p>
-                    Your home away form home, set on the majestic waters of the Atlantic Ocean, this will be a vacation
-                    to remember.
-                    Your home away form home, set on the majestic waters of the Atlantic Ocean, this will be a vacation
-                    to remember.
-                    Your home away form home, set on the majestic waters of the Atlantic Ocean, this will be a vacation
-                    to remember.
-                    Your home away form home, set on the majestic waters of the Atlantic Ocean, this will be a vacation
-                    to remember.
-                    Your home away form home, set on the majestic waters of the Atlantic Ocean, this will be a vacation
-                    to remember.
-                    Your home away form home, set on the majestic waters of the Atlantic Ocean, this will be a vacation
-                    to remember.
-                </p>
-            </div>
-        </div>
-
-
-        <div class="row">
-
-            <div class="col text-center">
-
-                <a id="check-availability-button" href="#!" class="btn btn-success">Check Availability</a>
-
-            </div>
-        </div>
-
-
-
-
+{{template "base" .}} {{define "content"}}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <img
+        src="/static/images/marjors-suite.png"
+        class="img-fluid img-thumbnail mx-auto d-block room-image"
+        alt="room image"
+      />
     </div>
-{{end}}
+  </div>
 
-{{define "js"}}
-    <script>
-        document.getElementById("check-availability-button").addEventListener("click", function () {
-            let html = `
-        <form id="check-availability-form" action="" method="post" novalidate class="needs-validation">
-            <div class="form-row">
-                <div class="col">
-                    <div class="form-row" id="reservation-dates-modal">
-                        <div class="col">
-                            <input disabled required class="form-control" type="text" name="start" id="start" placeholder="Arrival">
-                        </div>
-                        <div class="col">
-                            <input disabled required class="form-control" type="text" name="end" id="end" placeholder="Departure">
-                        </div>
+  <div class="row">
+    <div class="col">
+      <h1 class="text-center mt-4">Major's Suite</h1>
+      <p>
+        Your home away form home, set on the majestic waters of the Atlantic
+        Ocean, this will be a vacation to remember. Your home away form home,
+        set on the majestic waters of the Atlantic Ocean, this will be a
+        vacation to remember. Your home away form home, set on the majestic
+        waters of the Atlantic Ocean, this will be a vacation to remember. Your
+        home away form home, set on the majestic waters of the Atlantic Ocean,
+        this will be a vacation to remember. Your home away form home, set on
+        the majestic waters of the Atlantic Ocean, this will be a vacation to
+        remember. Your home away form home, set on the majestic waters of the
+        Atlantic Ocean, this will be a vacation to remember.
+      </p>
+    </div>
+  </div>
 
-                    </div>
-                </div>
-            </div>
-        </form>
-        `;
+  <div class="row">
+    <div class="col text-center">
+      <a id="check-availability-button" href="#!" class="btn btn-success"
+        >Check Availability</a
+      >
+    </div>
+  </div>
+</div>
+{{end}} {{define "js"}}
+<script>
+  document
+    .getElementById("check-availability-button")
+    .addEventListener("click", function () {
+      let html = `
+          <form id="check-availability-form" action="" method="post" novalidate class="needs-validation">
+              <div class="form-row">
+                  <div class="col">
+                      <div class="form-row" id="reservation-dates-modal">
+                          <div class="col">
+                              <input disabled required class="form-control" type="text" name="start" id="start" placeholder="Arrival" autocomplete="off">
+                          </div>
+                          <div class="col">
+                              <input disabled required class="form-control" type="text" name="end" id="end" placeholder="Departure" autocomplete="off">
+                          </div>
+  
+                      </div>
+                  </div>
+              </div>
+          </form>
+          `;
+      attention.custom({
+        title: "Choose your dates",
+        msg: html,
+        willOpen: () => {
+          const elem = document.getElementById("reservation-dates-modal");
+          const rp = new DateRangePicker(elem, {
+            format: "yyyy-mm-dd",
+            showOnFocus: true,
+            minDate: new Date(),
+          });
+        },
+        didOpen: () => {
+          document.getElementById("start").removeAttribute("disabled");
+          document.getElementById("end").removeAttribute("disabled");
+        },
+        callback: async (result) => {
+          const form = document.getElementById("check-availability-form");
+          const body = new FormData(form);
+          body.append("csrf_token", "{{.CSRFToken}}");
+          body.append("room_id", "2");
+          const {
+            data: { ok, room_id, start_date, end_date },
+          } = await axios.post("/search-availability-json", body);
+          const link = `/book-room?id=${room_id}&s=${start_date}&e=${end_date}`;
+          if (ok) {
             attention.custom({
-                title: 'Choose your dates',
-                msg: html,
+              icon: "success",
+              msg: `<p>Room is available!</p>
+                      <p><a href="${link}" class="btn btn-primary">Book now!</a></p>  
+                    `,
+              showConfirmButton: false,
             });
-        })
-    </script>
+          } else {
+            attention.error({
+              msg: "Room is not available, please choose another date",
+            });
+          }
+        },
+      });
+    });
+</script>
 {{end}}
