@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -143,8 +144,29 @@ func (repo *Repository) PostReservation(w http.ResponseWriter, r *http.Request) 
 
 	err = repo.DB.InsertRoomRestrictions(roomRestriction)
 	if err != nil {
+		repo.App.Session.Put(r.Context(), "error", "cannot insert room restriction")
 		helpers.ServerError(w, err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
+	htmlMsg := fmt.Sprintf(`
+		<strong>Reservation Confirmation</strong><br>
+		Dear %s, <br>
+		This is confirm your reservation from %s to %s
+	`,
+		reservation.FirstName,
+		reservation.StartDate.Format("2006-01-02"),
+		reservation.EndDate.Format("2006-01-02"))
+
+	msg := models.MailData{
+		To:       reservation.Email,
+		From:     "hotel-booking@mail.com",
+		Subject:  "Reservation confirmation",
+		Content:  htmlMsg,
+		Template: "basic.html",
+	}
+
+	repo.App.MailChan <- msg
 
 	repo.App.Session.Put(r.Context(), "reservation", reservation)
 	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
@@ -307,4 +329,8 @@ func (repo *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 	repo.App.Session.Put(r.Context(), "reservation", res)
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 
+}
+
+func (repo *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, r, "login.page.html", &models.TemplateData{})
 }
