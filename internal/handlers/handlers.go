@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
@@ -384,14 +385,123 @@ func (repo *Repository) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, r, "admin-dashboard.page.html", &models.TemplateData{})
 }
 
-func (repo *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "admin-new-reservations.page.html", &models.TemplateData{})
-}
-
 func (repo *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, r, "admin-all-reservations.page.html", &models.TemplateData{})
+	reservations, err := repo.DB.AllReservations()
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	data := make(map[string]interface{})
+	data["reservations"] = reservations
+
+	render.RenderTemplate(w, r, "admin-all-reservations.page.html", &models.TemplateData{
+		Data: data,
+	})
 }
 
-func (repo *Repository) AdminReservationsCalender(w http.ResponseWriter, r *http.Request) {
+func (repo *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request) {
+	reservations, err := repo.DB.AllNewReservations()
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	data := make(map[string]interface{})
+	data["reservations"] = reservations
+
+	render.RenderTemplate(w, r, "admin-new-reservations.page.html", &models.TemplateData{
+		Data: data,
+	})
+}
+
+func (repo *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Request) {
+	exploded := strings.Split(r.RequestURI, "/")
+	id, err := strconv.Atoi(exploded[4])
+
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	src := exploded[3]
+	stringMap := make(map[string]string)
+
+	stringMap["src"] = src
+
+	reservation, err := repo.DB.GetReservationById(id)
+
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	data := make(map[string]interface{})
+	data["reservation"] = reservation
+
+	render.RenderTemplate(w, r, "admin-show-reservation.page.html", &models.TemplateData{
+		Data:      data,
+		StringMap: stringMap,
+		Form:      forms.New(nil),
+	})
+}
+
+func (repo *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	exploded := strings.Split(r.RequestURI, "/")
+	id, err := strconv.Atoi(exploded[4])
+
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	src := exploded[3]
+	stringMap := make(map[string]string)
+
+	stringMap["src"] = src
+
+	reservation, err := repo.DB.GetReservationById(id)
+
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	reservation.FirstName = r.Form.Get("first_name")
+	reservation.LastName = r.Form.Get("last_name")
+	reservation.Email = r.Form.Get("email")
+	reservation.Phone = r.Form.Get("phone")
+
+	err = repo.DB.UpdateReservation(reservation)
+
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	repo.App.Session.Put(r.Context(), "flash", "Changes saved")
+	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+}
+
+func (repo *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, r, "admin-reservations-calendar.page.html", &models.TemplateData{})
+}
+
+func (repo *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	src := chi.URLParam(r, "src")
+
+	_ = repo.DB.UpdateProcessedReservation(id, 1)
+	repo.App.Session.Put(r.Context(), "flash", "Reservation marked as processed")
+	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
+}
+
+func (repo *Repository) AdminDeleteReservation(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	src := chi.URLParam(r, "src")
+
+	_ = repo.DB.DeleteReservation(id)
+	repo.App.Session.Put(r.Context(), "flash", "Reservation deleted")
+	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
 }

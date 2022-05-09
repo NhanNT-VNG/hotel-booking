@@ -7,17 +7,24 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/NhanNT-VNG/hotel-booking/internal/config"
 	"github.com/NhanNT-VNG/hotel-booking/internal/models"
 	"github.com/justinas/nosurf"
 )
 
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"humanDate": HumanDate,
+}
 var app *config.AppConfig
 
 func NewTemplates(_app *config.AppConfig) {
 	app = _app
+}
+
+func HumanDate(t time.Time) string {
+	return t.Format("2006-01-02")
 }
 
 func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
